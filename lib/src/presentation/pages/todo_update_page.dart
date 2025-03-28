@@ -23,15 +23,27 @@ class _UpdateTodoPageState extends State<UpdateTodoPage> {
   static const Color _primaryColor = Color(0xFF1A365D);
   static const Color _accentColor = Color(0xFF2C5282);
   static const Color _backgroundLight = Color(0xFFF7FAFC);
-  static const Color _textColor = Color(0xFF0F172A); // Deep slate
-  static const Color _shadowColor = Color(0xFF64748B); // Muted slate
-  static const Color _deleteColor = Color(0xFFE11D48); // Refined red
+  static const Color _textColor = Color(0xFF0F172A);
+  static const Color _shadowColor = Color(0xFF64748B);
+  static const Color _deleteColor = Color(0xFFE11D48);
+  static const Color _successColor = Color(0xFF48BB78);
+  static const Color _progressColor = Color(0xFF4299E1);
+  static const Color _pendingColor = Color(0xFFED8936);
+
+  // Status dropdown controller
+  late String _selectedStatus;
+  final List<String> _statusOptions = [
+    'pendiente',
+    'en progreso',
+    'completada',
+  ];
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.todo.nombre);
     _bodyController = TextEditingController(text: widget.todo.detalle);
+    _selectedStatus = widget.todo.estado ?? 'pendiente';
   }
 
   @override
@@ -60,20 +72,7 @@ class _UpdateTodoPageState extends State<UpdateTodoPage> {
       floating: false,
       pinned: true,
       backgroundColor: _primaryColor,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 8.0),
-          child: IconButton(
-            icon: Icon(
-              Icons.delete_forever_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-            onPressed: _showDeleteConfirmationDialog,
-            tooltip: 'Delete Task',
-          ),
-        ),
-      ],
+      actions: [Padding(padding: const EdgeInsets.only(right: 8.0))],
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
           'Update Task',
@@ -127,11 +126,160 @@ class _UpdateTodoPageState extends State<UpdateTodoPage> {
           _buildFormSectionTitle('Task Description'),
           const SizedBox(height: 16),
           _buildBodyField(),
+          const SizedBox(height: 24),
+          _buildFormSectionTitle('Task Status'),
+          const SizedBox(height: 16),
+          _buildStatusDropdown(),
           const SizedBox(height: 40),
           _buildUpdateButton(),
         ],
       ),
     );
+  }
+
+  // Add status dropdown method similar to CreateTodoPage
+  Widget _buildStatusDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _shadowColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedStatus,
+        decoration: InputDecoration(
+          prefixIcon: Container(
+            margin: const EdgeInsets.only(left: 8, right: 12),
+            child: Icon(
+              _getStatusIcon(_selectedStatus),
+              color: _getStatusColor(_selectedStatus),
+              size: 24,
+            ),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 16,
+          ),
+        ),
+        items:
+            _statusOptions.map((status) {
+              return DropdownMenuItem<String>(
+                value: status,
+                child: Row(
+                  children: [
+                    Icon(
+                      _getStatusIcon(status),
+                      color: _getStatusColor(status),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      status.capitalize ?? status,
+                      style: TextStyle(
+                        color: _getStatusColor(status),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+        selectedItemBuilder: (BuildContext context) {
+          return _statusOptions.map<Widget>((String status) {
+            return Row(
+              children: [
+                Text(
+                  status.capitalize ?? status,
+                  style: TextStyle(
+                    color: _getStatusColor(status),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            );
+          }).toList();
+        },
+        onChanged: (value) {
+          setState(() {
+            _selectedStatus = value!;
+          });
+        },
+        dropdownColor: Colors.white,
+        icon: Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Icon(
+            Icons.arrow_drop_down_rounded,
+            color: _accentColor,
+            size: 30,
+          ),
+        ),
+        isExpanded: true,
+      ),
+    );
+  }
+
+  // Add methods to get status icon and color
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'pendiente':
+        return Icons.pending_outlined;
+      case 'en progreso':
+        return Icons.priority_high_outlined;
+      case 'completada':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pendiente':
+        return _pendingColor;
+      case 'en progreso':
+        return _progressColor;
+      case 'completada':
+        return _successColor;
+      default:
+        return _textColor;
+    }
+  }
+
+  // Update the _updateTodo method to include the selected status
+  void _updateTodo() {
+    final nombre = _titleController.text.trim();
+    final detalle = _bodyController.text.trim();
+
+    if (nombre.isEmpty || detalle.isEmpty) {
+      _showValidationSnackbar('Please fill in all fields');
+      return;
+    }
+
+    final updatedTodo = Todo(
+      id: widget.todo.id,
+      nombre: nombre,
+      detalle: detalle,
+      estado: _selectedStatus,
+    );
+
+    _todoController
+        .updateTodo(updatedTodo)
+        .then((_) {
+          Get.back();
+          _showSuccessSnackbar('Task updated successfully');
+        })
+        .catchError((error) {
+          _showErrorSnackbar(error.toString());
+        });
   }
 
   Widget _buildFormSectionTitle(String title) {
@@ -258,98 +406,6 @@ class _UpdateTodoPageState extends State<UpdateTodoPage> {
         ),
       );
     });
-  }
-
-  void _showDeleteConfirmationDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: Text(
-          'Delete Task',
-          style: TextStyle(
-            color: _deleteColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to delete this task?',
-          style: TextStyle(color: _textColor, fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: _primaryColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _deleteColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () {
-              Get.back(); // Close dialog
-              _deleteTodo();
-            },
-            child: Text(
-              'Delete',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      barrierDismissible: false,
-    );
-  }
-
-  void _updateTodo() {
-    final nombre = _titleController.text.trim();
-    final detalle = _bodyController.text.trim();
-
-    if (nombre.isEmpty || detalle.isEmpty) {
-      _showValidationSnackbar('Please fill in all fields');
-      return;
-    }
-
-    final updatedTodo = Todo(
-      id: widget.todo.id,
-      nombre: nombre,
-      detalle: detalle,
-      estado: "pendiente",
-    );
-
-    _todoController
-        .updateTodo(updatedTodo)
-        .then((_) {
-          Get.back();
-          _showSuccessSnackbar('Task updated successfully');
-        })
-        .catchError((error) {
-          _showErrorSnackbar(error.toString());
-        });
-  }
-
-  void _deleteTodo() {
-    _todoController
-        .deleteTodo(widget.todo.id)
-        .then((_) {
-          Get.back(); // Close update page
-          Get.back(); // Go back to previous screen
-          _showSuccessSnackbar('Task deleted successfully');
-        })
-        .catchError((error) {
-          _showErrorSnackbar(error.toString());
-        });
   }
 
   void _showSuccessSnackbar(String message) {

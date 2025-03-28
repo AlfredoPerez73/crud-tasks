@@ -12,221 +12,11 @@ class TodoListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final TodoController controller = Get.put(TodoController());
 
-    // Refined Professional Color Palette
+    // Powerful Color Palette
     final Color primaryDarkBlue = Color(0xFF0D47A1);
     final Color accentBlue = Color(0xFF1565C0);
     final Color backgroundGrey = Color(0xFFF4F6F9);
     final Color softShadowBlue = Color(0xFFE3F2FD);
-
-    // Show Filter Bottom Sheet
-    void _showFilterBottomSheet(BuildContext context) {
-      final TextEditingController nameController = TextEditingController(
-        text: controller.nameFilter.value,
-      );
-
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) {
-          return GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: DraggableScrollableSheet(
-              initialChildSize: 0.7,
-              minChildSize: 0.5,
-              maxChildSize: 0.9,
-              builder: (_, scrollController) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryDarkBlue.withOpacity(0.2),
-                        spreadRadius: 5,
-                        blurRadius: 20,
-                        offset: const Offset(0, -8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // Drag Handle
-                      Container(
-                        width: 50,
-                        height: 6,
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Filtrar Tareas',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: primaryDarkBlue,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Name Filter TextField
-                            TextField(
-                              controller: nameController,
-                              onChanged: (value) {
-                                // Real-time name filtering
-                                controller.updateNameFilter(value);
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'Nombre de la tarea',
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: primaryDarkBlue,
-                                ),
-                                suffixIcon:
-                                    nameController.text.isNotEmpty
-                                        ? IconButton(
-                                          icon: Icon(
-                                            Icons.clear,
-                                            color: primaryDarkBlue,
-                                          ),
-                                          onPressed: () {
-                                            nameController.clear();
-                                            controller.updateNameFilter('');
-                                          },
-                                        )
-                                        : null,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide(
-                                    color: primaryDarkBlue,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide(
-                                    color: primaryDarkBlue,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Status Filter Chips
-                            Text(
-                              'Estado',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: primaryDarkBlue,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children:
-                                  [
-                                    'Pendiente',
-                                    'En Progreso',
-                                    'Completada',
-                                  ].map((status) {
-                                    return Obx(() {
-                                      bool isSelected =
-                                          controller.selectedStatus.value ==
-                                          status;
-                                      return ChoiceChip(
-                                        label: Text(
-                                          status,
-                                          style: TextStyle(
-                                            color:
-                                                isSelected
-                                                    ? Colors.white
-                                                    : primaryDarkBlue,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        selected: isSelected,
-                                        selectedColor: primaryDarkBlue,
-                                        backgroundColor: Colors.white,
-                                        side: BorderSide(
-                                          color: primaryDarkBlue,
-                                        ),
-                                        onSelected: (bool selected) {
-                                          // Real-time status filtering
-                                          controller.updateStatusFilter(
-                                            selected ? status : null,
-                                          );
-                                        },
-                                      );
-                                    });
-                                  }).toList(),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Filter Summary
-                            Obx(() {
-                              final filteredCount =
-                                  controller.filteredTodos.length;
-                              final totalCount = controller.todos.length;
-
-                              return Text(
-                                'Mostrando $filteredCount de $totalCount tareas',
-                                style: TextStyle(
-                                  color: primaryDarkBlue.withOpacity(0.7),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                textAlign: TextAlign.center,
-                              );
-                            }),
-
-                            const SizedBox(height: 16),
-
-                            // Reset Button
-                            ElevatedButton(
-                              onPressed: () {
-                                nameController.clear();
-                                controller.resetFilters();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryDarkBlue,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                              ),
-                              child: const Text('Restablecer Filtros'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          );
-        },
-      );
-    }
 
     return Scaffold(
       backgroundColor: backgroundGrey,
@@ -236,89 +26,237 @@ class TodoListPage extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: primaryDarkBlue,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list, color: Colors.white),
-            onPressed: () => _showFilterBottomSheet(context),
-            tooltip: 'Filtrar tareas',
+      ),
+      body: Column(
+        children: [
+          // Powerful Filter Section
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: primaryDarkBlue.withOpacity(0.1),
+                  spreadRadius: 2,
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Search Input
+                TextField(
+                  controller: TextEditingController(
+                    text: controller.nameFilter.value,
+                  ),
+                  onChanged: (value) {
+                    controller.updateNameFilter(value);
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Buscar tareas...',
+                    prefixIcon: Icon(Icons.search, color: primaryDarkBlue),
+                    filled: true,
+                    fillColor: backgroundGrey,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: primaryDarkBlue, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Status Filter Chips
+                Obx(
+                  () => Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children:
+                        ['Pendiente', 'En Progreso', 'Completada'].map((
+                          status,
+                        ) {
+                          bool isSelected = controller.selectedStatuses
+                              .contains(status);
+                          return FilterChip(
+                            label: Text(
+                              status,
+                              style: TextStyle(
+                                color:
+                                    isSelected ? Colors.white : primaryDarkBlue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            selected: isSelected,
+                            selectedColor: primaryDarkBlue,
+                            backgroundColor: backgroundGrey,
+                            side: BorderSide(
+                              color: primaryDarkBlue.withOpacity(0.5),
+                            ),
+                            onSelected: (bool selected) {
+                              controller.updateStatusFilter(status);
+                            },
+                            checkmarkColor: Colors.white,
+                          );
+                        }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Filter Summary and Reset
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Obx(() {
+                      final filteredCount = controller.filteredTodos.length;
+                      final totalCount = controller.todos.length;
+                      return Text(
+                        'Mostrando $filteredCount de $totalCount tareas',
+                        style: TextStyle(
+                          color: primaryDarkBlue.withOpacity(0.7),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      );
+                    }),
+                    TextButton(
+                      onPressed: () {
+                        controller.resetFilters();
+                      },
+                      child: Text(
+                        'Restablecer',
+                        style: TextStyle(
+                          color: primaryDarkBlue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Task List
+          Expanded(
+            child: Obx(() {
+              // Show loading state
+              if (controller.isLoading.value) {
+                return Center(
+                  child: CircularProgressIndicator(color: primaryDarkBlue),
+                );
+              }
+
+              // Show error state
+              if (controller.error.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error, color: Colors.red, size: 60),
+                      SizedBox(height: 16),
+                      Text(
+                        'Error',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: primaryDarkBlue,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(controller.error.value, textAlign: TextAlign.center),
+                    ],
+                  ),
+                );
+              }
+
+              // Show empty state
+              if (controller.filteredTodos.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.checklist_rounded,
+                        color: primaryDarkBlue.withOpacity(0.7),
+                        size: 120,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'No hay tareas',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: primaryDarkBlue,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'No se encontraron tareas con los filtros aplicados',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Task List
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: controller.filteredTodos.length,
+                itemBuilder: (context, index) {
+                  final todo = controller.filteredTodos[index];
+                  return Dismissible(
+                    key: Key(todo.id.toString()),
+                    background: _buildDismissibleBackground(),
+                    secondaryBackground: _buildDismissibleBackground(),
+                    direction: DismissDirection.horizontal,
+                    confirmDismiss: (direction) async {
+                      return await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Confirmar Eliminación'),
+                            content: Text(
+                              '¿Estás seguro de que deseas eliminar la tarea "${todo.nombre}"?',
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(context).pop(false),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                child: const Text('Eliminar'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    onDismissed: (direction) {
+                      controller.deleteTodo(todo.id!);
+                    },
+                    child: TodoTile(
+                      todo: todo,
+                      onTap: () => Get.to(() => UpdateTodoPage(todo: todo)),
+                    ),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
-      body: Obx(() {
-        // Show loading state
-        if (controller.isLoading.value) {
-          return Center(
-            child: CircularProgressIndicator(color: primaryDarkBlue),
-          );
-        }
-
-        // Show error state
-        if (controller.error.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error, color: Colors.red, size: 60),
-                SizedBox(height: 16),
-                Text(
-                  'Error',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: primaryDarkBlue,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(controller.error.value, textAlign: TextAlign.center),
-              ],
-            ),
-          );
-        }
-
-        // Show empty state
-        if (controller.filteredTodos.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.checklist_rounded,
-                  color: primaryDarkBlue.withOpacity(0.7),
-                  size: 120,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'No hay tareas',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: primaryDarkBlue,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'No se encontraron tareas con los filtros aplicados',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          );
-        }
-
-        // Show todo list
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.filteredTodos.length,
-          itemBuilder: (context, index) {
-            final todo = controller.filteredTodos[index];
-            return TodoTile(
-              todo: todo,
-              onTap: () => Get.to(() => UpdateTodoPage(todo: todo)),
-            );
-          },
-        );
-      }),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Get.to(() => const CreateTodoPage()),
         backgroundColor: primaryDarkBlue,
@@ -327,9 +265,22 @@ class TodoListPage extends StatelessWidget {
       ),
     );
   }
+
+  // Dismissible background method
+  Widget _buildDismissibleBackground() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.red,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      child: const Icon(Icons.delete, color: Colors.white, size: 30),
+    );
+  }
 }
 
-// TodoTile widget remains the same as in the previous implementation
 class TodoTile extends StatelessWidget {
   final Todo todo;
   final VoidCallback onTap;
@@ -360,7 +311,7 @@ class TodoTile extends StatelessWidget {
     final statusDetails = _getStatusDetails();
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),

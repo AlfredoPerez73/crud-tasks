@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:math';
-
 import 'package:tasks/src/domain/controller/todo_controller.dart';
-
 import '../../data/model/todo_model copy.dart';
 
 class CreateTodoPage extends StatefulWidget {
@@ -17,15 +14,27 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
   final TodoController _todoController = Get.find<TodoController>();
   final _formKey = GlobalKey<FormState>();
 
+  // Enhanced color palette
   static const Color _primaryColor = Color(0xFF1A365D);
   static const Color _accentColor = Color(0xFF2C5282);
   static const Color _backgroundLight = Color(0xFFF7FAFC);
-  static const Color _textColor = Color(0xFF0F172A); // Deep slate
-  static const Color _shadowColor = Color(0xFF64748B); // Muted slate
+  static const Color _textColor = Color(0xFF0F172A);
+  static const Color _shadowColor = Color(0xFF64748B);
+  static const Color _successColor = Color(0xFF48BB78);
+  static const Color _progressColor = Color(0xFF4299E1);
+  static const Color _pendingColor = Color(0xFFED8936);
 
   // Controllers for text fields
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+
+  // New status dropdown controller
+  String _selectedStatus = 'pendiente';
+  final List<String> _statusOptions = [
+    'pendiente',
+    'en progreso',
+    'completada',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +118,10 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
             _buildFormSectionTitle('Task Description'),
             const SizedBox(height: 16),
             _buildDescriptionField(),
+            const SizedBox(height: 24),
+            _buildFormSectionTitle('Task Status'),
+            const SizedBox(height: 16),
+            _buildStatusDropdown(),
             const SizedBox(height: 40),
             _buildCreateButton(),
           ],
@@ -171,6 +184,122 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
       },
       cursorColor: _primaryColor,
     );
+  }
+
+  Widget _buildStatusDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _shadowColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedStatus,
+        decoration: InputDecoration(
+          prefixIcon: Container(
+            margin: const EdgeInsets.only(left: 8, right: 12),
+            child: Icon(
+              _getStatusIcon(_selectedStatus),
+              color: _getStatusColor(_selectedStatus),
+              size: 24,
+            ),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 16,
+          ),
+        ),
+        items:
+            _statusOptions.map((status) {
+              return DropdownMenuItem<String>(
+                value: status,
+                child: Row(
+                  children: [
+                    Icon(
+                      _getStatusIcon(status),
+                      color: _getStatusColor(status),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      status.capitalize ?? status,
+                      style: TextStyle(
+                        color: _getStatusColor(status),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+        selectedItemBuilder: (BuildContext context) {
+          return _statusOptions.map<Widget>((String status) {
+            return Row(
+              children: [
+                Text(
+                  status.capitalize ?? status,
+                  style: TextStyle(
+                    color: _getStatusColor(status),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            );
+          }).toList();
+        },
+        onChanged: (value) {
+          setState(() {
+            _selectedStatus = value!;
+          });
+        },
+        dropdownColor: Colors.white,
+        icon: Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Icon(
+            Icons.arrow_drop_down_rounded,
+            color: _accentColor,
+            size: 30,
+          ),
+        ),
+        isExpanded: true,
+      ),
+    );
+  }
+
+  // Add this method to get icons based on status
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'pendiente':
+        return Icons.pending_outlined;
+      case 'en progreso':
+        return Icons.priority_high_outlined;
+      case 'completada':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pendiente':
+        return _pendingColor;
+      case 'en progreso':
+        return _progressColor;
+      case 'completada':
+        return _successColor;
+      default:
+        return _textColor;
+    }
   }
 
   InputDecoration _professionalInputDecoration({
@@ -259,12 +388,10 @@ class _CreateTodoPageState extends State<CreateTodoPage> {
 
   void _createTodo() {
     if (_formKey.currentState?.validate() ?? false) {
-      final random = Random();
-
       final newTodo = TodoSinId(
         nombre: _titleController.text.trim(),
         detalle: _descriptionController.text.trim(),
-        estado: "pendiente",
+        estado: _selectedStatus,
       );
 
       _todoController

@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
 import 'package:tasks/src/data/repositories/todo_repository.dart';
 
-import '../../data/model/todo_model copy.dart';
 import '../../data/model/todo_model.dart';
+import '../../data/model/todo_model copy.dart';
 
 class TodoController extends GetxController {
   final TodoRepository repository = TodoRepository();
@@ -11,12 +11,15 @@ class TodoController extends GetxController {
   final RxList<Todo> filteredTodos = <Todo>[].obs;
   final RxBool isLoading = false.obs;
   final RxString error = "".obs;
-  final RxString selectedStatus = RxString('');
+  final RxList<String> selectedStatuses = <String>[].obs;
   final RxString nameFilter = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    ever(todos, (_) => _applyFilters());
+    ever(nameFilter, (_) => _applyFilters());
+    ever(selectedStatuses, (_) => _applyFilters());
     fetchTodos();
   }
 
@@ -30,12 +33,48 @@ class TodoController extends GetxController {
 
       // Set both original and current todos
       todos.value = fetchedTodos;
-      filteredTodos.value = fetchedTodos;
+      _applyFilters(); // Apply filters after fetching
       isLoading.value = false;
     } catch (e) {
       error.value = 'No se pudieron cargar las tareas: ${e.toString()}';
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Apply filters method
+  void _applyFilters() {
+    // Always start with the full todo list
+    filteredTodos.value =
+        todos.where((todo) {
+          // Name filter
+          bool nameMatch =
+              nameFilter.value.isEmpty ||
+              todo.nombre.toLowerCase().contains(
+                nameFilter.value.toLowerCase(),
+              );
+
+          // Status filter - normalize comparison
+          bool statusMatch =
+              selectedStatuses.isEmpty ||
+              selectedStatuses.contains(_normalizeStatus(todo.estado ?? ''));
+
+          return nameMatch && statusMatch;
+        }).toList();
+  }
+
+  // Normalize status to match filter chip labels
+  String _normalizeStatus(String status) {
+    // Convert to lowercase and handle potential variations
+    switch (status.toLowerCase()) {
+      case 'pendiente':
+        return 'Pendiente';
+      case 'en progreso':
+        return 'En Progreso';
+      case 'completada':
+        return 'Completada';
+      default:
+        return status;
     }
   }
 
@@ -76,7 +115,6 @@ class TodoController extends GetxController {
     } catch (e) {
       // Mensaje de error más detallado
       error.value = "No se pudo actualizar la tarea. Detalles: $e";
-      print('Error de actualización: $e');
     } finally {
       isLoading.value = false;
     }
@@ -99,38 +137,22 @@ class TodoController extends GetxController {
     }
   }
 
-  void updateStatusFilter(String? status) {
-    selectedStatus.value = status ?? '';
-    _applyFilters();
+  void updateStatusFilter(String status) {
+    if (selectedStatuses.contains(status)) {
+      selectedStatuses.remove(status);
+    } else {
+      selectedStatuses.add(status);
+    }
   }
 
   void updateNameFilter(String name) {
     nameFilter.value = name.toLowerCase();
-    _applyFilters();
   }
 
-  void _applyFilters() {
-    filteredTodos.value =
-        todos.where((todo) {
-          // Filtro por nombre
-          bool nameMatch =
-              nameFilter.value.isEmpty ||
-              todo.nombre.toLowerCase().contains(nameFilter.value);
-
-          // Filtro por estado
-          bool statusMatch =
-              selectedStatus.value == null ||
-              todo.estado?.toLowerCase() == selectedStatus.value?.toLowerCase();
-
-          return nameMatch || statusMatch;
-        }).toList();
-  }
-
-  // Your existing filter methods remain the same
+  // Reset method to clear all filters
   void resetFilters() {
     nameFilter.value = '';
-    selectedStatus.value = '';
-    filteredTodos.value = todos; // Reset to ALL tasks
+    selectedStatuses.clear();
   }
 
   // Toggle completed status (modify as needed based on your Todo model)

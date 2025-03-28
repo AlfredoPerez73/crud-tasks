@@ -36,10 +36,9 @@ class TodoRepository {
             headers: {'Connection': 'keep-alive'},
           )
           .timeout(
-            Duration(seconds: 10),
+            Duration(seconds: 2),
             onTimeout: () {
               // Si hay timeout, retorna tareas estáticas
-              print('Tiempo de conexión agotado. Usando tareas estáticas.');
               return http.Response('[]', 408); // Código 408 para timeout
             },
           );
@@ -54,12 +53,10 @@ class TodoRepository {
         case 500:
         default:
           // En caso de cualquier error, retorna tareas estáticas
-          print('Error de conexión. Usando tareas estáticas.');
           return _staticTodos;
       }
     } catch (e) {
       // Captura cualquier otra excepción de red
-      print('Error de conexión: $e');
       return _staticTodos; // Retorna tareas estáticas
     }
   }
