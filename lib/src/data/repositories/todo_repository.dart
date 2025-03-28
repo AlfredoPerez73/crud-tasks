@@ -6,45 +6,65 @@ import 'package:tasks/src/data/model/todo_model copy.dart';
 class TodoRepository {
   final String _baseUrl = 'https://nk0blh78-8000.use2.devtunnels.ms';
 
+  // Lista de tareas estáticas para cuando no hay conexión
+  final List<Todo> _staticTodos = [
+    Todo.alfredo({
+      'id': 1,
+      'nombre': 'Tarea de prueba 1',
+      'detalle': 'Esta es una tarea de ejemplo cuando no hay conexión',
+      'estado': 'pendiente',
+    }),
+    Todo.alfredo({
+      'id': 2,
+      'nombre': 'Tarea de prueba 2',
+      'detalle': 'Otra tarea de ejemplo sin conexión',
+      'estado': 'completado',
+    }),
+    Todo.alfredo({
+      'id': 3,
+      'nombre': 'Tarea de prueba 3',
+      'detalle': 'Verificando funcionalidad sin internet',
+      'estado': 'pendiente',
+    }),
+  ];
+
   Future<List<Todo>> getTodos() async {
     try {
       final response = await http
           .get(
             Uri.parse('$_baseUrl/tareas/'),
-            // Añade un timeout para manejar conexiones lentas
             headers: {'Connection': 'keep-alive'},
           )
           .timeout(
             Duration(seconds: 10),
             onTimeout: () {
-              throw Exception('Tiempo de conexión agotado');
+              // Si hay timeout, retorna tareas estáticas
+              print('Tiempo de conexión agotado. Usando tareas estáticas.');
+              return http.Response('[]', 408); // Código 408 para timeout
             },
           );
 
-      // Manejo detallado de diferentes códigos de estado
       switch (response.statusCode) {
         case 200:
           final List jsonList = json.decode(response.body);
           return jsonList.map((json) => Todo.alfredo(json)).toList();
         case 404:
           throw Exception('Endpoint no encontrado');
+        case 408: // Timeout
         case 500:
-          throw Exception('Error interno del servidor');
         default:
-          throw Exception('Error desconocido: ${response.statusCode}');
+          // En caso de cualquier error, retorna tareas estáticas
+          print('Error de conexión. Usando tareas estáticas.');
+          return _staticTodos;
       }
     } catch (e) {
-      // Imprime el error para depuración
+      // Captura cualquier otra excepción de red
       print('Error de conexión: $e');
-
-      // Lanza un error personalizado
-      throw Exception(
-        'No se pudieron cargar las tareas. Verifica tu conexión.',
-      );
+      return _staticTodos; // Retorna tareas estáticas
     }
   }
 
-  // Create a new todo
+  // Los demás métodos permanecen igual
   Future<Todo> createTodo(TodoSinId todo) async {
     try {
       final response = await http.post(
@@ -69,7 +89,6 @@ class TodoRepository {
 
   Future<Todo> updateTodo(Todo todo) async {
     try {
-      // Imprimir detalles para depuración
       print('Actualizando tarea: ${todo.toJson()}');
 
       final response = await http.put(
@@ -92,7 +111,6 @@ class TodoRepository {
     }
   }
 
-  // Delete a todo
   Future<void> deleteTodo(int id) async {
     try {
       final response = await http.delete(Uri.parse('$_baseUrl/tareas/$id'));

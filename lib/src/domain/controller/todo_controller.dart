@@ -7,9 +7,12 @@ import '../../data/model/todo_model.dart';
 class TodoController extends GetxController {
   final TodoRepository repository = TodoRepository();
 
-  final RxList todos = [].obs;
+  final RxList<Todo> todos = <Todo>[].obs;
+  final RxList<Todo> filteredTodos = <Todo>[].obs;
   final RxBool isLoading = false.obs;
   final RxString error = "".obs;
+  final RxString selectedStatus = RxString('');
+  final RxString nameFilter = ''.obs;
 
   @override
   void onInit() {
@@ -21,12 +24,16 @@ class TodoController extends GetxController {
   Future<void> fetchTodos() async {
     try {
       isLoading.value = true;
-      error.value = "";
+      error.value = '';
 
       final fetchedTodos = await repository.getTodos();
-      todos.assignAll(fetchedTodos);
+
+      // Set both original and current todos
+      todos.value = fetchedTodos;
+      filteredTodos.value = fetchedTodos;
+      isLoading.value = false;
     } catch (e) {
-      error.value = e.toString();
+      error.value = 'No se pudieron cargar las tareas: ${e.toString()}';
     } finally {
       isLoading.value = false;
     }
@@ -90,6 +97,40 @@ class TodoController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void updateStatusFilter(String? status) {
+    selectedStatus.value = status ?? '';
+    _applyFilters();
+  }
+
+  void updateNameFilter(String name) {
+    nameFilter.value = name.toLowerCase();
+    _applyFilters();
+  }
+
+  void _applyFilters() {
+    filteredTodos.value =
+        todos.where((todo) {
+          // Filtro por nombre
+          bool nameMatch =
+              nameFilter.value.isEmpty ||
+              todo.nombre.toLowerCase().contains(nameFilter.value);
+
+          // Filtro por estado
+          bool statusMatch =
+              selectedStatus.value == null ||
+              todo.estado?.toLowerCase() == selectedStatus.value?.toLowerCase();
+
+          return nameMatch || statusMatch;
+        }).toList();
+  }
+
+  // Your existing filter methods remain the same
+  void resetFilters() {
+    nameFilter.value = '';
+    selectedStatus.value = '';
+    filteredTodos.value = todos; // Reset to ALL tasks
   }
 
   // Toggle completed status (modify as needed based on your Todo model)
